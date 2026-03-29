@@ -37,9 +37,9 @@ def run_before_fix(keys):
     ]
 
     scenario_plan = (
-        ["BROKEN"] * 8 +      # Scenario 1: bad k
-        ["REUSED"] * 8 +      # Scenario 2: reused k
-        ["SECURE"] * 9        # Scenario 3: good k
+        ["BROKEN"] * 8 +
+        ["REUSED"] * 8 +
+        ["SECURE"] * 9
     )
 
     reuse_k = None   
@@ -69,7 +69,6 @@ def run_before_fix(keys):
 
         elif scenario == "REUSED":
             if reuse_k is None:
-                # Pick a valid k once — reuse it for all REUSED tests
                 reuse_k = random.randint(2, q - 2)
                 while math.gcd(reuse_k, q) != 1:
                     reuse_k = random.randint(2, q - 2)
@@ -84,21 +83,18 @@ def run_before_fix(keys):
             entry["verified"] = verified
 
             if reuse_sig_first is None:
-                # First REUSED entry — store for attack
                 reuse_sig_first = sig
                 reuse_msg_first = m
                 entry["label"] = "REUSED (first)"
                 entry["detail"] = f"k={reuse_k} stored for attack"
                 entry["attack"] = None
             else:
-                # Subsequent REUSED — launch full attack
                 attack = reused_k_attack(reuse_msg_first, reuse_sig_first, m, sig, keys)
                 entry["label"] = "FORGED" if (attack["success"] and attack.get("verified")) else "REUSED"
                 entry["detail"] = "\n".join(attack["steps"])
                 entry["attack"] = attack
 
-        else:  # SECURE
-            # Pick fresh valid k (no prevention system — just happens to be valid)
+        else:
             k = random.randint(2, q - 2)
             while math.gcd(k, q) != 1:
                 k = random.randint(2, q - 2)
@@ -118,9 +114,6 @@ def run_before_fix(keys):
     return results
 
 
-# ---------------------------------------------------------------------------
-# AFTER-FIX run  (25 tests: all should be SECURE with 0 failures)
-# ---------------------------------------------------------------------------
 def run_after_fix(keys):
     """Run 25 test cases with safe_sign() prevention applied."""
     reset_used_k()
@@ -153,16 +146,13 @@ def run_after_fix(keys):
             "verified": verified,
             "elapsed_ms": sig.get("elapsed_ms", 0),
             "label": "SECURE",
-            "detail": f"k={sig['k']}  gcd(k,p-1)=1  k not reused  →  safe",
+            "detail": f"k={sig['k']}  gcd(k,Q)=1  k not reused  →  safe",
             "attack": None,
         })
 
     return results
 
 
-# ---------------------------------------------------------------------------
-# SIGNING-TIME vs KEY-SIZE  data
-# ---------------------------------------------------------------------------
 PRIME_SIZES = [
     ("32-bit",  1073741827),
     ("40-bit",  1099511628401),
@@ -195,9 +185,6 @@ def run_timing_benchmark(n_samples=10):
     return results
 
 
-# ---------------------------------------------------------------------------
-# GCD-CHECK OVERHEAD  data
-# ---------------------------------------------------------------------------
 def run_overhead_benchmark(keys, n=50):
     """
     Compare average time of:

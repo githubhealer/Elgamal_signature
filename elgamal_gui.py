@@ -209,8 +209,6 @@ class ElGamalApp(tk.Tk):
                 spine.set_edgecolor("#2e3147")
         self.canvas.draw()
 
-    # --- button handlers ---
-
     def _gen_keys(self):
         _clear(self.log)
         self.keys = generate_keys()
@@ -282,7 +280,7 @@ class ElGamalApp(tk.Tk):
         _append(self.log, "")
         _append(self.log, "=" * 68, GRN_CLR)
         _append(self.log, "  PHASE 2 - AFTER FIX  (25 test cases with prevention)", GRN_CLR)
-        _append(self.log, "  Prevention: gcd(k, p-1)=1 enforced and k is never reused", GRN_CLR)
+        _append(self.log, "  Prevention: gcd(k, Q)=1 enforced and k is never reused", GRN_CLR)
         _append(self.log, "=" * 68, GRN_CLR)
 
         results = run_after_fix(self.keys)
@@ -452,7 +450,7 @@ class ElGamalApp(tk.Tk):
         _append(self.log,
                 f"\n[Test {test_no:02d}]  {label}  |  Message: \"{msg}\"", colour)
         _append(self.log,
-                f"  hash(m) = {m}   k = {k}   gcd(k, p-1) = {gcd_k}", DIM)
+            f"  hash(m) = {m}   k = {k}   gcd(k, Q) = {gcd_k}", DIM)
 
         sig = r.get("sig", {})
 
@@ -479,7 +477,7 @@ class ElGamalApp(tk.Tk):
                 for line in atk.get("steps", []):
                     _append(self.log, line, ORG_CLR)
 
-        else:  # SECURE
+        else:
             _append(self.log,
                     f"  r={sig.get('r','?')}  s={sig.get('s','?')}", GRN_CLR)
             _append(self.log,
