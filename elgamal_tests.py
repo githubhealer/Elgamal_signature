@@ -34,14 +34,19 @@ def run_before_fix(keys):
         "Grant access", "Revoke token", "Reset password", "Block user",
         "Issue refund", "Approve request", "Archive data", "Publish post",
         "Submit form", "Download file", "Upload asset", "Close account", "Log event",
+        "Hello World", "Buy 100 shares", "Transfer $500", "Sign this doc",
+        "Secret message", "Pay Alice", "Authorize login", "Open vault",
+        "Confirm order", "Delete record", "Update profile", "Send report",
+        "Grant access", "Revoke token", "Reset password", "Block user",
+        "Issue refund", "Approve request", "Archive data", "Publish post",
+        "Submit form", "Download file", "Upload asset", "Close account", "Log event",
     ]
 
     scenario_plan = (
-        ["BROKEN"] * 8 +
-        ["REUSED"] * 8 +
-        ["SECURE"] * 9
+        ["BROKEN"] * 25 +
+        ["REUSED"] * 25
     )
-
+    random.shuffle(scenario_plan)
     reuse_k = None   
     reuse_sig_first = None
     reuse_msg_first = None
@@ -115,20 +120,22 @@ def run_before_fix(keys):
 
 
 def run_after_fix(keys):
-    """Run 25 test cases with safe_sign() prevention applied."""
     reset_used_k()
     results = []
 
     messages = [
-        "After-fix msg 1", "After-fix msg 2", "After-fix msg 3",
-        "After-fix msg 4", "After-fix msg 5", "After-fix msg 6",
-        "After-fix msg 7", "After-fix msg 8", "After-fix msg 9",
-        "After-fix msg 10", "After-fix msg 11", "After-fix msg 12",
-        "After-fix msg 13", "After-fix msg 14", "After-fix msg 15",
-        "After-fix msg 16", "After-fix msg 17", "After-fix msg 18",
-        "After-fix msg 19", "After-fix msg 20", "After-fix msg 21",
-        "After-fix msg 22", "After-fix msg 23", "After-fix msg 24",
-        "After-fix msg 25",
+        "Hello World", "Buy 100 shares", "Transfer $500", "Sign this doc",
+        "Secret message", "Pay Alice", "Authorize login", "Open vault",
+        "Confirm order", "Delete record", "Update profile", "Send report",
+        "Grant access", "Revoke token", "Reset password", "Block user",
+        "Issue refund", "Approve request", "Archive data", "Publish post",
+        "Submit form", "Download file", "Upload asset", "Close account", "Log event",
+        "Hello World", "Buy 100 shares", "Transfer $500", "Sign this doc",
+        "Secret message", "Pay Alice", "Authorize login", "Open vault",
+        "Confirm order", "Delete record", "Update profile", "Send report",
+        "Grant access", "Revoke token", "Reset password", "Block user",
+        "Issue refund", "Approve request", "Archive data", "Publish post",
+        "Submit form", "Download file", "Upload asset", "Close account", "Log event",
     ]
 
     for i, msg in enumerate(messages):
