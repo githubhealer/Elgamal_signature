@@ -3,7 +3,7 @@ import random
 import time
 from sympy import mod_inverse
 
-P = 1073741827  # prime no used as group modulus
+P = 1000000007  # safe prime: (p-1)/2 = 500000003 is also prime, ensures attack always works
 G = 2           # generator
 
 
@@ -52,63 +52,82 @@ def verify(message_hash, signature, keys):
 
 
 def reused_k_attack(m1, sig1, m2, sig2, keys):
+    # ElGamal sign: s = k_inv * (m - x*r) mod (p-1)
+    # When k is reused: r1 == r2 (same k => same r = g^k mod p)
+    # Attack: k = (m1-m2)*(s1-s2)_inv mod (p-1)
+    #         x = (m1 - k*s1) * r_inv mod (p-1)
     p  = keys["p"]
     g  = keys["g"]
     y  = keys["y"]
     q  = p - 1
-    r1, s1 = sig1["r"], sig1["s"]
-    r2, s2 = sig2["r"], sig2["s"]
+    r, s1 = sig1["r"], sig1["s"]   # r1 == r2 since same k; just call it r
+    s2    = sig2["s"]
 
     steps = []
-    steps.append(f"  Given: m1={m1}, s1={s1}, r1={r1}")
-    steps.append(f"  Given: m2={m2}, s2={s2}, r2={r2}")
+    steps.append(f"  ElGamal signing equation: s = k_inv * (m - x*r) mod (p-1)")
+    steps.append(f"  Both messages signed with the same k, so r is identical: r = {r}")
+    steps.append(f"  sig1: m1={m1}, s1={s1}")
+    steps.append(f"  sig2: m2={m2}, s2={s2}")
 
-    diff_s  = (s1 - s2) % q
+    # Step 1: Recover k
+    # s1 - s2 = k_inv*(m1-m2) mod (p-1)  =>  k = (m1-m2)*(s1-s2)_inv mod (p-1)
+    diff_s   = (s1 - s2) % q
     gcd_diff = math.gcd(diff_s, q)
     steps.append(f"\n  Step 1: Recover k")
+    steps.append(f"    s1 - s2 = k_inv*(m1-m2) mod (p-1)  =>  k = (m1-m2)*(s1-s2)_inv mod (p-1)")
     steps.append(f"    (s1 - s2) mod (p-1) = {diff_s}")
     steps.append(f"    gcd(s1-s2, p-1)     = {gcd_diff}")
 
     if gcd_diff != 1:
-        steps.append("    Cannot invert (s1-s2). Attack indeterminate for this pair.")
+        steps.append("    (s1-s2) not invertible mod (p-1). Attack indeterminate for this pair.")
         return {"success": False, "steps": steps}
 
     diff_s_inv  = mod_inverse(diff_s, q)
     k_recovered = ((m1 - m2) * diff_s_inv) % q
-    steps.append(f"    k = (m1-m2) * (s1-s2) inverse mod (p-1) = {k_recovered}")
+    steps.append(f"    k = (m1-m2) * (s1-s2)_inv mod (p-1) = {k_recovered}")
+    steps.append(f"    Verify: g^k mod p = {pow(g, k_recovered, p)}, r = {r}, match: {pow(g, k_recovered, p) == r}")
 
+    # Step 2: Recover private key x
+    # From s1 = k_inv*(m1 - x*r): k*s1 = m1 - x*r  =>  x*r = m1 - k*s1  =>  x = (m1 - k*s1)*r_inv mod (p-1)
     steps.append(f"\n  Step 2: Recover private key x")
-    gcd_r1 = math.gcd(r1, q)
-    if gcd_r1 != 1:
-        steps.append("    r1 not invertible mod (p-1). Attack indeterminate.")
+    steps.append(f"    From s1 = k_inv*(m1 - x*r): rearranging gives x = (m1 - k*s1) * r_inv mod (p-1)")
+    gcd_r = math.gcd(r, q)
+    if gcd_r != 1:
+        steps.append("    r not invertible mod (p-1). Attack indeterminate.")
         return {"success": False, "steps": steps}
 
-    r1_inv      = mod_inverse(r1, q)
-    x_recovered = ((m1 - k_recovered * s1) * r1_inv) % q
-    steps.append(f"    x = (m1 - k*s1) * r1 inverse mod (p-1) = {x_recovered}")
+    r_inv       = mod_inverse(r, q)
+    x_recovered = ((m1 - k_recovered * s1) * r_inv) % q
+    steps.append(f"    x = (m1 - k*s1) * r_inv mod (p-1) = {x_recovered}")
 
     y_check   = pow(g, x_recovered, p)
     x_correct = (y_check == y)
-    steps.append(f"    Check: g^x_recovered mod p = {y_check}")
-    steps.append(f"    Actual public key y        = {y}")
+    steps.append(f"    Verify: g^x_recovered mod p = {y_check}")
+    steps.append(f"    Original public key y       = {y}")
     steps.append(f"    Private key correctly recovered: {x_correct}")
 
+    # Step 3: Forge signature on a new message using recovered x
     m3 = random.randint(10000, 99999)
     steps.append(f"\n  Step 3: Forge signature on new message m3={m3}")
+    steps.append(f"    Using recovered x={x_recovered} to sign m3 (attacker acts as legitimate signer)")
     forged_keys = {**keys, "x": x_recovered}
 
-    k_forge = random.randint(2, q - 2)
+    k_forge = random.randint(2, q - 2)  # fresh k for the forged signature
     while math.gcd(k_forge, q) != 1:
         k_forge = random.randint(2, q - 2)
 
     forged_sig = sign(m3, forged_keys, k_forge)
-    steps.append(f"    Forged signature: r={forged_sig['r']}, s={forged_sig['s']}")
+    steps.append(f"    Forged sig: r_f={forged_sig['r']}, s_f={forged_sig['s']}")
 
+    # Step 4: Verify forged signature against original public key y
+    # ElGamal verification: g^m == y^r * r^s (mod p)
     verified = verify(m3, forged_sig, {**keys, "y": y})
-    steps.append(f"\n  Step 4: Verify forged signature")
-    steps.append(f"    g^m3 mod p         = {pow(g, m3, p)}")
-    steps.append(f"    y^r * r^s mod p    = {(pow(y, forged_sig['r'], p) * pow(forged_sig['r'], forged_sig['s'], p)) % p}")
-    steps.append(f"    Verification result: {'PASSED - Forged signature accepted' if verified else 'FAILED'}")
+    rf, sf   = forged_sig["r"], forged_sig["s"]
+    steps.append(f"\n  Step 4: Verify forged signature against original public key y={y}")
+    steps.append(f"    ElGamal check: g^m3 mod p  ==  y^r_f * r_f^s_f mod p")
+    steps.append(f"    LHS = g^m3 mod p           = {pow(g, m3, p)}")
+    steps.append(f"    RHS = y^r_f * r_f^s_f mod p= {(pow(y, rf, p) * pow(rf, sf, p)) % p}")
+    steps.append(f"    Verification result: {'PASSED - forged signature accepted by verifier' if verified else 'FAILED'}")
 
     return {
         "success": True, "k_recovered": k_recovered,

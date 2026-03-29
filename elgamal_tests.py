@@ -7,7 +7,7 @@ from elgamal_core import (
 )
 
 
-def _hash(msg: str) -> int:
+def _hash(msg: str):
     h = 0
     for ch in msg:
         h = (h * 31 + ord(ch)) % (P - 1)
