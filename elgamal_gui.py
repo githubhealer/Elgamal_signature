@@ -64,7 +64,7 @@ class ElGamalApp(tk.Tk):
             font=("Segoe UI", 16, "bold"), bg=ACCENT, fg="white",
         ).pack(side="left", padx=20, pady=10)
         tk.Label(
-            banner, text="Stallings' Cryptography and Network Security",
+            banner, text="25WSC1BRS09's Cryptography and Network Security",
             font=("Segoe UI", 10), bg=ACCENT, fg="#d0cfff",
         ).pack(side="right", padx=20)
 
@@ -255,6 +255,7 @@ class ElGamalApp(tk.Tk):
                         (r.get("attack") and r["attack"] and r["attack"].get("verified")))
         secure = sum(1 for r in results if r["label"] == "SECURE")
         total  = len(results)
+        success_rate = (secure / total * 100) if total else 0.0
 
         self.stat_vars["broken_before"].set(f"{broken}/{total}")
         self.stat_vars["forged_before"].set(f"{forged}/{total}")
@@ -266,6 +267,7 @@ class ElGamalApp(tk.Tk):
         _append(self.log, f"  BROKEN  : {broken}/{total}", RED_CLR)
         _append(self.log, f"  FORGED  : {forged}/{total}", ORG_CLR)
         _append(self.log, f"  SECURE  : {secure}/{total}", GRN_CLR)
+        _append(self.log, f"  SUCCESS RATE: {success_rate:.2f}%", GOLD)
         _append(self.log, "-" * 68, DIM)
 
         self.btn_attack.configure(state="normal")
@@ -293,6 +295,7 @@ class ElGamalApp(tk.Tk):
         forged = sum(1 for r in results if r["label"] == "FORGED")
         secure = sum(1 for r in results if r["label"] == "SECURE")
         total  = len(results)
+        success_rate = (secure / total * 100) if total else 0.0
 
         self.stat_vars["broken_after"].set(f"{broken}/{total}")
         self.stat_vars["forged_after"].set(f"{forged}/{total}")
@@ -304,6 +307,7 @@ class ElGamalApp(tk.Tk):
         _append(self.log, f"  BROKEN : {broken}/{total}  (0% failure rate)", RED_CLR)
         _append(self.log, f"  FORGED : {forged}/{total}  (0% forgery rate)", ORG_CLR)
         _append(self.log, f"  SECURE : {secure}/{total}  (100% secure)", GRN_CLR)
+        _append(self.log, f"  SUCCESS RATE: {success_rate:.2f}%", GOLD)
         _append(self.log, "-" * 68, DIM)
 
         self.btn_fix.configure(state="normal")
