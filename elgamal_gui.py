@@ -9,7 +9,7 @@ matplotlib.use("TkAgg")
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from elgamal_core import generate_keys, verify
+from elgamal_core import generate_keys, verify, P, Q, G
 from elgamal_tests import (
     run_before_fix, run_after_fix,
     run_timing_benchmark, run_overhead_benchmark,
@@ -216,16 +216,21 @@ class ElGamalApp(tk.Tk):
         _append(self.log, "=" * 68, ACCENT)
         _append(self.log, "  KEY GENERATION", ACCENT)
         _append(self.log, "=" * 68, ACCENT)
-        _append(self.log, f"  Prime p     = {k['p']}", TEXT)
-        _append(self.log, f"  Generator g = {k['g']}", TEXT)
+        _append(self.log, f"  Subgroup Q  = {Q}  (prime, Q | P-1)", DIM)
+        _append(self.log, f"  Safe prime P = {k['p']}  (P = 2Q+1)", TEXT)
+        _append(self.log, f"  Generator G  = {k['g']}  (order-Q generator mod P)", TEXT)
         _append(self.log, f"  Private key x = {k['x']}", GOLD)
-        _append(self.log, f"  Public  key y = g^x mod p = {k['y']}", GRN_CLR)
+        _append(self.log, f"  Public  key y = G^x mod P = {k['y']}", GRN_CLR)
         _append(self.log, "")
 
         self.key_info.configure(state="normal")
         self.key_info.delete("1.0", tk.END)
         self.key_info.insert(tk.END,
-            f"p = {k['p']}\ng = {k['g']}\nx = {k['x']}\ny = {k['y']}")
+            f"Q = {Q}  (Sophie Germain prime)\n"
+            f"P = {k['p']}  (safe prime, P=2Q+1)\n"
+            f"G = {k['g']}  (generator of order Q)\n"
+            f"x = {k['x']}  (private key)\n"
+            f"y = {k['y']}  (public key)")
         self.key_info.configure(state="disabled")
 
         for btn in (self.btn_attack, self.btn_fix, self.btn_graph):

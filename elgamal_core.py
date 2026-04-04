@@ -1,14 +1,32 @@
 import math
 import random
 import time
-from sympy import mod_inverse
-
-P = 1000000007
-Q = 500000003
-G = 2
+from sympy import isprime, mod_inverse
 
 
-def generate_keys(p=P, g=G):
+def generate_params(bit_length: int = 29):
+    while True:
+        q_candidate = random.getrandbits(bit_length) | (1 << (bit_length - 1)) | 1
+        if not isprime(q_candidate):
+            continue
+        p_candidate = 2 * q_candidate + 1
+        if not isprime(p_candidate):
+            continue
+        while True:
+            h = random.randint(2, p_candidate - 2)
+            g_candidate = pow(h, 2, p_candidate)
+            if g_candidate != 1:
+                return q_candidate, p_candidate, g_candidate
+
+
+Q, P, G = generate_params()
+
+
+def generate_keys(p=None, g=None):
+    if p is None:
+        p = P
+    if g is None:
+        g = G
     x = random.randint(2, p - 2)
     y = pow(g, x, p)
     return {"p": p, "g": g, "x": x, "y": y}
@@ -133,7 +151,6 @@ def reset_used_k():
     _used_k_set.clear()
 
 def safe_sign(message_hash, keys):
-    p = keys["p"]
     q = Q
     attempts = 0
     while True:

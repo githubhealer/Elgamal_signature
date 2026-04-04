@@ -3,21 +3,20 @@ import math
 import random
 from elgamal_core import (
     generate_keys, sign, verify, safe_sign, reset_used_k,
-    reused_k_attack, timed_sign, timed_safe_sign, P, G,
+    reused_k_attack, timed_sign, timed_safe_sign, P, Q, G,
 )
 
 
 def _hash(msg: str):
     h = 0
     for ch in msg:
-        h = (h * 31 + ord(ch)) % (P - 1)
-    return max(h, 1)      
+        h = (h * 31 + ord(ch)) % Q
+    return max(h, 1)
 
 
-def _pick_bad_k(p):
-    q = p - 1
-    k = random.choice([2, 4, 6, 8, 10, 12, q // 2, q // 3])
-    return k
+def _pick_bad_k(_p=None):
+    choices = [Q, 2 * Q, 3 * Q, Q + Q // 2]
+    return random.choice(choices)
 
 
 
@@ -25,7 +24,7 @@ def run_before_fix(keys):
     reset_used_k()
     results = []
     p = keys["p"]
-    q = p - 1
+    q = Q
 
     messages = [
         "Hello World", "Buy 100 shares", "Transfer $500", "Sign this doc",
@@ -74,9 +73,9 @@ def run_before_fix(keys):
 
         elif scenario == "REUSED":
             if reuse_k is None:
-                reuse_k = random.randint(2, q - 2)
-                while math.gcd(reuse_k, q) != 1:
-                    reuse_k = random.randint(2, q - 2)
+                reuse_k = random.randint(2, Q - 2)
+                while math.gcd(reuse_k, Q) != 1:
+                    reuse_k = random.randint(2, Q - 2)
 
             t0 = __import__("time").perf_counter()
             sig = sign(m, keys, reuse_k)
