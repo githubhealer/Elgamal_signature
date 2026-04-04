@@ -364,9 +364,12 @@ class ElGamalApp(tk.Tk):
         labels = ["Broken", "Forged", "Secure"]
 
         bars1 = ax.bar([xi - width/2 for xi in x], [bb, fb, sb],
-                       width, label="Before", color=[RED_CLR, ORG_CLR, "#2980b9"])
+                       width, label="Vulnerable  (bad k / reused k)", color=[RED_CLR, ORG_CLR, "#2980b9"])
         bars2 = ax.bar([xi + width/2 for xi in x], [ba, fa, sa],
-                       width, label="After",  color=["#7f1a1a", "#7f4a00", GRN_CLR])
+                       width,
+                       label="Secured (gcd check + unique k)",
+                       color=GRN_CLR)
+
 
         ax.set_xticks(x)
         ax.set_xticklabels(labels, color=TEXT, fontsize=7)
